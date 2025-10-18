@@ -1,0 +1,48 @@
+名字: Build PDF Report
+
+on:
+  push:
+    paths:
+      - "report.md"
+      - "data/**"
+      - "scripts/**"
+      - "requirements.txt"
+      - ".github/workflows/build-pdf.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - 名字: Checkout
+        uses: actions/checkout@v4
+
+      - 名字: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - 名字: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - 名字: Generate figures
+        run: |
+          python scripts/analyze_magnetics.py
+          ls -al figs || true
+
+      - 名字: Install Pandoc and TeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-lang-chinese fonts-noto-cjk
+
+      - 名字: Build PDF
+        run: |
+          pandoc report.md --from gfm --pdf-engine=xelatex --output report.pdf
+
+      - 名字: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          名字: report-pdf
+          path: report.pdf
